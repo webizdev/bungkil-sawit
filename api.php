@@ -105,11 +105,11 @@ function getAllData($conn) {
                 "id" => $v['id'],
                 "name" => $v['name'],
                 "specs" => [
-                    "protein" => $v['protein'],
-                    "fat" => $v['fat'],
-                    "moisture" => $v['moisture'],
-                    "shellContent" => $v['shell_content'],
-                    "dirt" => $v['dirt']
+                    ["label" => "Protein", "value" => $v['protein']],
+                    ["label" => "Fat", "value" => $v['fat']],
+                    ["label" => "Moisture", "value" => $v['moisture']],
+                    ["label" => "Shell Content", "value" => $v['shell_content']],
+                    ["label" => "Dirt / Impurity", "value" => $v['dirt']]
                 ],
                 "coa" => $v['coa_url'],
                 "images" => [$v['image_url']]
@@ -179,9 +179,20 @@ function updateProducts($conn, $products) {
         
         foreach ($p->variants as $v) {
             $v_stmt = $conn->prepare("INSERT INTO variants (id, product_id, name, protein, fat, moisture, shell_content, dirt, coa_url, image_url) VALUES (?,?,?,?,?,?,?,?,?,?)");
+            
+            $protein = ""; $fat = ""; $moisture = ""; $shell = ""; $dirt = "";
+            foreach($v->specs as $s) {
+                $l = strtolower($s->label);
+                if (strpos($l, 'protein') !== false) $protein = $s->value;
+                if (strpos($l, 'fat') !== false) $fat = $s->value;
+                if (strpos($l, 'moisture') !== false) $moisture = $s->value;
+                if (strpos($l, 'shell') !== false) $shell = $s->value;
+                if (strpos($l, 'dirt') !== false || strpos($l, 'impurity') !== false) $dirt = $s->value;
+            }
+
             $v_stmt->execute([
                 $v->id, $p->id, $v->name, 
-                $v->specs->protein, $v->specs->fat, $v->specs->moisture, $v->specs->shellContent, $v->specs->dirt,
+                $protein, $fat, $moisture, $shell, $dirt,
                 $v->coa, $v->images[0]
             ]);
         }
